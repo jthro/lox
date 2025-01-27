@@ -4,11 +4,13 @@
 package org.example;
 
 import org.junit.Test;
+import org.lox.Lox;
+
 import static org.junit.Assert.*;
 
 public class AppTest {
     @Test public void appHasAGreeting() {
-        App classUnderTest = new App();
+        Lox classUnderTest = new Lox();
         assertNotNull("app should have a greeting", classUnderTest.getGreeting());
     }
 }
