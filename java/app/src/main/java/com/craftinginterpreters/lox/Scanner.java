@@ -55,6 +55,17 @@ public class Scanner {
             case '/':
                 if (match('/')) {
                     while (peek() != '\n' && !isAtEnd()) advance();
+                } else if (match('*')) {
+                    while (peek() != '*' && peekNext() != '/') {
+                        System.out.println(current);
+                        if (current + 1 >= source.length()) {
+                            Lox.error(line, "Unterminated multi-line comment.");
+                            return;
+                        }
+                        if (peek() == '\n') line++;
+                        advance();
+                    }
+                    current += 2;
                 } else {
                     addToken(TokenType.SLASH);
                 }
