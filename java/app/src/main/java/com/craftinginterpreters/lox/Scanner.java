@@ -39,6 +39,8 @@ class Scanner {
             case '+': addToken(TokenType.PLUS); break;
             case ';': addToken(TokenType.SEMICOLON); break;
             case '*': addToken(TokenType.STAR); break;
+            case '?': addToken(TokenType.QUESTION_MARK);break;
+            case ':': addToken(TokenType.COLON); break;
 
             case '!':
                 addToken(match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
