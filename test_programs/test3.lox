@@ -1,0 +1,10 @@
+var a = "global a";
+{
+  var a = "outer a";
+  {
+    var a = "inner a";
+    print a;
+  }
+  print a;
+}
+print a;
