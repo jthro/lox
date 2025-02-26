@@ -1,0 +1,6 @@
+var a = "sussy baka";
+{
+        var b  = 3;
+        print b +  19;
+}
+print a;
