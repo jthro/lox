@@ -1,4 +1,5 @@
 package com.jthro.lox;
+
 public class Token {
     final TokenType type;
     final String lexeme;
@@ -15,5 +16,5 @@ public class Token {
     public String toString() {
         return type + " " + lexeme + " " + literal;
     }
-    
+
 }

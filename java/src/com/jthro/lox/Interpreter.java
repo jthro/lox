@@ -1,11 +1,11 @@
 package com.jthro.lox;
+
 import java.util.List;
 
 import com.jthro.lox.Expr.Binary;
 import com.jthro.lox.Expr.Grouping;
 import com.jthro.lox.Expr.Literal;
 import com.jthro.lox.Expr.Unary;
-
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
@@ -26,46 +26,48 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object left = evaluate(expr.left);
         Object right = evaluate(expr.right);
 
-        switch(expr.operator.type) {
-            case TokenType.MINUS:
+        switch (expr.operator.type) {
+            case MINUS:
                 checkNumberOperands(expr.operator, left, right);
-                return (double)left - (double)right;
-            
-            case TokenType.SLASH:
-                checkNumberOperands(expr.operator, left, right);
-                return (double)left / (double)right;
-            
-            case TokenType.STAR:
-                checkNumberOperands(expr.operator, left, right);
-                return (double)left * (double)right;
+                return (double) left - (double) right;
 
-            case TokenType.PLUS:
+            case SLASH:
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left / (double) right;
+
+            case STAR:
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left * (double) right;
+
+            case PLUS:
                 if (left instanceof Double && right instanceof Double) {
-                    return (double)left + (double)right;
+                    return (double) left + (double) right;
                 }
                 if (left instanceof String && right instanceof String) {
-                    return (String)left + (String)right;
+                    return (String) left + (String) right;
                 }
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
-            
-            case TokenType.GREATER:
-                checkNumberOperands(expr.operator, left, right);
-                return (double)left > (double)right;
-            
-            case TokenType.GREATER_EQUAL:
-                checkNumberOperands(expr.operator, left, right);
-                return (double)left >= (double)right;
 
-            case TokenType.LESS:
+            case GREATER:
                 checkNumberOperands(expr.operator, left, right);
-                return (double)left < (double)right;
+                return (double) left > (double) right;
 
-            case TokenType.LESS_EQUAL:
+            case GREATER_EQUAL:
                 checkNumberOperands(expr.operator, left, right);
-                return (double)left <= (double)right;
+                return (double) left >= (double) right;
 
-            case TokenType.EQUAL_EQUAL: return isEqual(left, right);
-            case TokenType.BANG_EQUAL: return !isEqual(left, right);
+            case LESS:
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left < (double) right;
+
+            case LESS_EQUAL:
+                checkNumberOperands(expr.operator, left, right);
+                return (double) left <= (double) right;
+
+            case EQUAL_EQUAL:
+                return isEqual(left, right);
+            case BANG_EQUAL:
+                return !isEqual(left, right);
         }
         // Unreachable
         return null;
@@ -85,9 +87,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitLogicalExpr(Expr.Logical expr) {
         Object left = evaluate(expr.left);
         if (expr.operator.type == TokenType.OR) {
-            if (isTruthy(left)) return left;
+            if (isTruthy(left))
+                return left;
         } else {
-            if (!isTruthy(left)) return left;
+            if (!isTruthy(left))
+                return left;
         }
 
         return evaluate(expr.right);
@@ -98,11 +102,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case TokenType.MINUS:
+            case MINUS:
                 checkNumberOperand(expr.operator, right);
-                return -(double)right;
-            
-            case TokenType.BANG:
+                return -(double) right;
+
+            case BANG:
                 return !isTruthy(right);
 
             // Unreachable
@@ -151,9 +155,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitIfStmt(Stmt.If stmt) {
-        if (isTruthy(stmt.condition)) {
+        if (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.thenBranch);
-        } else {
+        } else if (stmt.elseBranch != null) {
             execute(stmt.elseBranch);
         }
 
@@ -192,22 +196,27 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         environment.assign(expr.name, value);
         return value;
     }
-    
+
     private boolean isTruthy(Object object) {
-        if (object == null) return false;
-        if (object instanceof Boolean) return (boolean)object;
+        if (object == null)
+            return false;
+        if (object instanceof Boolean)
+            return (boolean) object;
         return true;
     }
 
     private boolean isEqual(Object a, Object b) {
-        if (a == null && b == null) return true;
-        if (a == null) return false;
+        if (a == null && b == null)
+            return true;
+        if (a == null)
+            return false;
 
         return a.equals(b);
     }
 
     private String stringify(Object object) {
-        if (object == null) return "nil";
+        if (object == null)
+            return "nil";
 
         if (object instanceof Double) {
             String text = object.toString();
@@ -221,12 +230,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     private void checkNumberOperand(Token operator, Object operand) {
-        if (operand instanceof Double) return;
+        if (operand instanceof Double)
+            return;
         throw new RuntimeError(operator, "Operand must be a number.");
     }
 
     private void checkNumberOperands(Token operator, Object left, Object right) {
-        if (left instanceof Double && right instanceof Double) return;
+        if (left instanceof Double && right instanceof Double)
+            return;
         throw new RuntimeError(operator, "Operands must be numbers.");
     }
 }

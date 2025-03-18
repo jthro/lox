@@ -1,4 +1,5 @@
 package com.jthro.lox;
+
 import com.jthro.lox.Expr.Assign;
 import com.jthro.lox.Expr.Binary;
 import com.jthro.lox.Expr.Grouping;
@@ -24,7 +25,8 @@ class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitLiteralExpr(Literal expr) {
-        if (expr.value == null) return "nil";
+        if (expr.value == null)
+            return "nil";
         return expr.value.toString();
     }
 
@@ -48,7 +50,7 @@ class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitVariableExpr(Variable expr) {
-         return parenthesize(expr.name.lexeme);
+        return parenthesize(expr.name.lexeme);
     }
 
     @Override
