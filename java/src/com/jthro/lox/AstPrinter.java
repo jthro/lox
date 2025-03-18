@@ -1,12 +1,11 @@
-package com.craftinginterpreters.lox;
-
-import com.craftinginterpreters.lox.Expr.Assign;
-import com.craftinginterpreters.lox.Expr.Binary;
-import com.craftinginterpreters.lox.Expr.Grouping;
-import com.craftinginterpreters.lox.Expr.Literal;
-import com.craftinginterpreters.lox.Expr.Logical;
-import com.craftinginterpreters.lox.Expr.Unary;
-import com.craftinginterpreters.lox.Expr.Variable;
+package com.jthro.lox;
+import com.jthro.lox.Expr.Assign;
+import com.jthro.lox.Expr.Binary;
+import com.jthro.lox.Expr.Grouping;
+import com.jthro.lox.Expr.Literal;
+import com.jthro.lox.Expr.Logical;
+import com.jthro.lox.Expr.Unary;
+import com.jthro.lox.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {

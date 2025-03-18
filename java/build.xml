@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="lox" default="compile" basedir=".">
+    <!-- Set directories -->
+    <property name="src.dir" value="src"/>
+    <property name="tool.dir" value="tool"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="toolclasses.dir" value="${build.dir}/toolclasses"/>
+    <property name="tooloutput.dir" value="${src.dir}/com/jthro/lox"/>
+    <property name="dist.dir" value="dist"/>
+
+    <!-- Create directories if they don't exist -->
+    <target name="init">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${toolclasses.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+
+    <!-- Compile AST -->
+    <target name="compile_ast" depends="init">
+        <javac srcdir="${tool.dir}" destdir="${toolclasses.dir}"/>
+    </target>
+
+    <!-- Generate AST -->
+    <target name="generate_ast" depends="compile_ast">
+        <java classname="tool.com.jthro.astgen.GenerateAst" classpath="${toolclasses.dir}">
+            <arg value="${tooloutput.dir}"/>
+        </java>
+    </target>
+
+    <!-- Compile source code -->
+    <target name="compile" depends="generate_ast">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}">
+            <classpath>
+            </classpath>
+        </javac>
+    </target>
+
+    <!-- Create JAR file -->
+    <target name="jar" depends="compile">
+        <jar destfile="${dist.dir}/project.jar" basedir="${classes.dir}"/>
+    </target>
+
+    <!-- Clean build directory -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+</project>

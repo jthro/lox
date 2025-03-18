@@ -1,11 +1,11 @@
-package com.craftinginterpreters.lox;
-
+package com.jthro.lox;
 import java.util.List;
 
-import com.craftinginterpreters.lox.Expr.Binary;
-import com.craftinginterpreters.lox.Expr.Grouping;
-import com.craftinginterpreters.lox.Expr.Literal;
-import com.craftinginterpreters.lox.Expr.Unary;
+import com.jthro.lox.Expr.Binary;
+import com.jthro.lox.Expr.Grouping;
+import com.jthro.lox.Expr.Literal;
+import com.jthro.lox.Expr.Unary;
+
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
