@@ -27,19 +27,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object right = evaluate(expr.right);
 
         switch(expr.operator.type) {
-            case TokenType.MINUS:
+            case MINUS:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left - (double)right;
             
-            case TokenType.SLASH:
+            case SLASH:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left / (double)right;
             
-            case TokenType.STAR:
+            case STAR:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left * (double)right;
 
-            case TokenType.PLUS:
+            case PLUS:
                 if (left instanceof Double && right instanceof Double) {
                     return (double)left + (double)right;
                 }
@@ -48,24 +48,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 }
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
             
-            case TokenType.GREATER:
+            case GREATER:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left > (double)right;
             
-            case TokenType.GREATER_EQUAL:
+            case GREATER_EQUAL:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left >= (double)right;
 
-            case TokenType.LESS:
+            case LESS:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left < (double)right;
 
-            case TokenType.LESS_EQUAL:
+            case LESS_EQUAL:
                 checkNumberOperands(expr.operator, left, right);
                 return (double)left <= (double)right;
 
-            case TokenType.EQUAL_EQUAL: return isEqual(left, right);
-            case TokenType.BANG_EQUAL: return !isEqual(left, right);
+            case EQUAL_EQUAL: return isEqual(left, right);
+            case BANG_EQUAL: return !isEqual(left, right);
         }
         // Unreachable
         return null;
@@ -98,11 +98,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case TokenType.MINUS:
+            case MINUS:
                 checkNumberOperand(expr.operator, right);
                 return -(double)right;
             
-            case TokenType.BANG:
+            case BANG:
                 return !isTruthy(right);
 
             // Unreachable
@@ -144,6 +144,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        throw new BreakException();
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
         return null;
@@ -151,9 +156,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitIfStmt(Stmt.If stmt) {
-        if (isTruthy(stmt.condition)) {
+        if (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.thenBranch);
-        } else {
+        } else if (stmt.elseBranch != null) {
             execute(stmt.elseBranch);
         }
 
@@ -180,9 +185,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        while (isTruthy(evaluate(stmt.condition))) {
-            execute(stmt.body);
-        }
+        try {
+            while (isTruthy(evaluate(stmt.condition))) {
+                execute(stmt.body);
+            }
+        } catch (BreakException e) {}
+
         return null;
     }
 
@@ -229,4 +237,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (left instanceof Double && right instanceof Double) return;
         throw new RuntimeError(operator, "Operands must be numbers.");
     }
+
+    private static class BreakException extends RuntimeException{}
 }

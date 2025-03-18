@@ -1,13 +1,16 @@
 package com.jthro.lox;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 class Parser {
-    private static class ParseError extends RuntimeException {};
+    private static class ParseError extends RuntimeException {
+    };
 
     private final List<Token> tokens;
     private int current = 0;
+    private int loopDepth = 0;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -28,7 +31,8 @@ class Parser {
 
     private Stmt declaration() {
         try {
-            if (match(TokenType.VAR)) return varDeclaration();
+            if (match(TokenType.VAR))
+                return varDeclaration();
 
             return statement();
         } catch (ParseError error) {
@@ -38,11 +42,18 @@ class Parser {
     }
 
     private Stmt statement() {
-        if (match(TokenType.FOR)) return forStatement();
-        if (match(TokenType.IF)) return ifStatement();
-        if (match(TokenType.PRINT)) return printStatement();
-        if (match(TokenType.WHILE)) return whileStatement();
-        if (match(TokenType.LEFT_BRACE)) return new Stmt.Block(block());
+        if (match(TokenType.FOR))
+            return forStatement();
+        if (match(TokenType.IF))
+            return ifStatement();
+        if (match(TokenType.PRINT))
+            return printStatement();
+        if (match(TokenType.WHILE))
+            return whileStatement();
+        if (match(TokenType.LEFT_BRACE))
+            return new Stmt.Block(block());
+        if (match(TokenType.BREAK))
+            return breakStatement();
 
         return expressionStatement();
     }
@@ -70,23 +81,25 @@ class Parser {
             increment = expression();
         }
         consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
-        Stmt body = statement();
+        try {
+            loopDepth++;
+            Stmt body = statement();
 
-        if (increment != null) {
-            body = new Stmt.Block(
-                Arrays.asList(
-                    body,
-                    new Stmt.Expression(increment)));
+            if (increment != null) {
+                body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
+            }
+
+            if (condition == null) condition = new Expr.Literal(true);
+            body = new Stmt.While(condition, body);
+
+            if (initialiser != null) {
+                body = new Stmt.Block(Arrays.asList(initialiser, body));
+            }
+
+            return body;
+        } finally {
+            loopDepth--;
         }
-
-        if (condition == null) condition = new Expr.Literal(true);
-        body = new Stmt.While(condition, body);
-
-        if (initialiser != null) {
-            body = new Stmt.Block(Arrays.asList(initialiser, body));
-        }
-
-        return body;
     }
 
     private Stmt ifStatement() {
@@ -125,9 +138,19 @@ class Parser {
         consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
         consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
-        Stmt body = statement();
+        try {
+            loopDepth++;
+            Stmt body = statement();
+            return new Stmt.While(condition, body);
+        } finally {
+            loopDepth--;
+        }
+    }
 
-        return new Stmt.While(condition, body);
+    private Stmt breakStatement() {
+        if (loopDepth == 0) error(previous(), "Cannot use 'break' outside a loop.");
+        consume(TokenType.SEMICOLON, "Expect ';' after break.");
+        return new Stmt.Break();
     }
 
     private Stmt expressionStatement() {
@@ -155,7 +178,7 @@ class Parser {
             Expr value = assignment();
 
             if (expr instanceof Expr.Variable) {
-                Token name = ((Expr.Variable)expr).name;
+                Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
             }
 
@@ -248,9 +271,12 @@ class Parser {
     }
 
     private Expr primary() {
-        if (match(TokenType.FALSE)) return new Expr.Literal(false);
-        if (match(TokenType.TRUE)) return new Expr.Literal(true);
-        if (match(TokenType.NIL)) return new Expr.Literal(null);
+        if (match(TokenType.FALSE))
+            return new Expr.Literal(false);
+        if (match(TokenType.TRUE))
+            return new Expr.Literal(true);
+        if (match(TokenType.NIL))
+            return new Expr.Literal(null);
 
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new Expr.Literal(previous().literal);
@@ -281,18 +307,21 @@ class Parser {
     }
 
     private Token consume(TokenType type, String message) {
-        if (check(type)) return advance();
+        if (check(type))
+            return advance();
 
         throw error(peek(), message);
     }
 
     private boolean check(TokenType type) {
-        if (isAtEnd()) return false;
+        if (isAtEnd())
+            return false;
         return peek().type == type;
     }
 
     private Token advance() {
-        if (!isAtEnd()) current++;
+        if (!isAtEnd())
+            current++;
         return previous();
     }
 
@@ -317,7 +346,8 @@ class Parser {
         advance();
 
         while (!isAtEnd()) {
-            if (previous().type == TokenType.SEMICOLON) return;
+            if (previous().type == TokenType.SEMICOLON)
+                return;
         }
 
         switch (peek().type) {
