@@ -25,16 +25,18 @@ class Parser {
     }
 
     private Expr expression() {
+        if (match(TokenType.FUN)) return lambda("function");
         return assignment();
     }
 
     private Stmt declaration() {
         try {
-            if (match(TokenType.FUN))
+            if (match(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
                 return function("function");
-            if (match(TokenType.VAR))
+            }
+            if (match(TokenType.VAR)) {
                 return varDeclaration();
-
+            }
             return statement();
         } catch (ParseError error) {
             synchronise();
@@ -161,6 +163,22 @@ class Parser {
 
     private Stmt.Function function(String kind) {
         Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+        Expr.Lambda lambda = lambda(kind);
+        return new Stmt.Function(name, lambda);
+    }
+
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
+
+    private Expr.Lambda lambda(String kind) {
         consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
         List<Token> parameters = new ArrayList<>();
         if (!check(TokenType.RIGHT_PAREN)) {
@@ -176,18 +194,8 @@ class Parser {
 
         consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
         List<Stmt> body = block();
-        return new Stmt.Function(name, parameters, body);
-    }
 
-    private List<Stmt> block() {
-        List<Stmt> statements = new ArrayList<>();
-
-        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
-            statements.add(declaration());
-        }
-
-        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
-        return statements;
+        return new Expr.Lambda(parameters, body);
     }
 
     private Expr assignment() {
@@ -369,6 +377,13 @@ class Parser {
         return peek().type == type;
     }
 
+    private boolean checkNext(TokenType type) {
+        if (isAtEnd()) return false;
+        if (tokens.get(current).type == TokenType.EOF) return false;
+        System.out.println(tokens.get(current).type);
+        return tokens.get(current).type == type;
+    }
+
     private Token advance() {
         if (!isAtEnd())
             current++;
@@ -382,6 +397,7 @@ class Parser {
     private Token peek() {
         return tokens.get(current);
     }
+
 
     private Token previous() {
         return tokens.get(current - 1);
