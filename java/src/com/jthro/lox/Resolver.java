@@ -7,7 +7,7 @@ import java.util.Stack;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
-    private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+    private final Stack<Map<String, Variable>> scopes = new Stack<>();
     // This allows us to check for the case where a variable's initializer references itself.
     // false means declared, true means initialized.
     // If during an initialization a name is found but set to false, that means it is declared but not initialized.
@@ -23,10 +23,28 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         FUNCTION
     }
 
+    private class Variable {
+        Token name;
+        VariableState state;
+
+        Variable(Token name, VariableState state) {
+            this.name = name;
+            this.state = state;
+        }
+    }
+
+    private enum VariableState {
+        DECLARED,
+        INITIALIZED,
+        USED
+    }
+
     public void resolve(List<Stmt> statements) {
+        // Enter scope here
         for (Stmt statement : statements) {
             resolve(statement);
         }
+        // Goes out of scope here
     }
 
     private void resolve(Stmt stmt) {
@@ -52,32 +70,43 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private void beginScope() {
-        scopes.push(new HashMap<String, Boolean>());
+        scopes.push(new HashMap<String, Variable>());
     }
 
     private void endScope() {
-        scopes.pop();
+        Map<String, Variable> scope = scopes.pop();
+        for (Map.Entry<String, Variable> entry : scope.entrySet()) {
+            Variable v = entry.getValue();
+            if (v.state != VariableState.USED) {
+                Lox.error(v.name, "Unused variable.");
+            }
+        }
     }
 
     private void declare(Token name) {
         if (scopes.isEmpty()) return;
 
-        Map<String, Boolean> scope = scopes.peek();
+        Map<String, Variable> scope = scopes.peek();
         if (scope.containsKey(name.lexeme)) {
             Lox.error(name, "Already a variable with this name in this scope.");
         }
-        scope.put(name.lexeme, false);
+        scope.put(name.lexeme, new Variable(name, VariableState.DECLARED));
     }
 
     private void define(Token name) {
         if (scopes.isEmpty()) return;
-        scopes.peek().put(name.lexeme, true);
+        scopes.peek().get(name.lexeme).state = VariableState.INITIALIZED;
     }
 
-    private void resolveLocal(Expr expr, Token name) {
+    private void resolveLocal(Expr expr, Token name, Boolean used) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             if (scopes.get(i).containsKey(name.lexeme)) {
                 interpreter.resolve(expr, scopes.size() - 1 - i);
+
+                if (used) {
+                    scopes.get(i).get(name.lexeme).state = VariableState.USED;
+                }
+
                 return;
             }
         }
@@ -152,18 +181,21 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitVariableExpr(Expr.Variable expr) {
-        if (!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
+        if (!scopes.isEmpty() && scopes.peek().containsKey(expr.name.lexeme) &&
+            scopes.peek().get(expr.name.lexeme).state == VariableState.DECLARED) {
             Lox.error(expr.name, "Can't read local variable in its own initializer.");
         }
 
-        resolveLocal(expr, expr.name);
+        // This means we are resolving the variable outside of an assignment statement
+        resolveLocal(expr, expr.name, true);
         return null;
     }
 
     @Override
     public Void visitAssignExpr(Expr.Assign expr) {
         resolve(expr.value);
-        resolveLocal(expr, expr.name);
+        // Resolving a variable inside an assignment statement - technically not a use
+        resolveLocal(expr, expr.name, false);
         return null;
     }
 
