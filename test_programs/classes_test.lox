@@ -1,0 +1,16 @@
+class MyClass {
+    init(a) {
+        this.a = a;
+    }
+
+    sayMyName() {
+        print this.a;
+    }
+}
+
+var instance = MyClass(4);
+print instance.a;
+var fn = instance.sayMyName;
+
+instance.a = 47;
+fn();

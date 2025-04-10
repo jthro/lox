@@ -1,0 +1,7 @@
+class Impostor {
+      accuse() {
+          return "sussy";
+      }
+}
+
+print Impostor;

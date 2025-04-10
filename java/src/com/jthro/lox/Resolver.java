@@ -26,8 +26,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private enum FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD,
+        INITIALIZER
     }
+
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
+
+    private ClassType currentClass = ClassType.NONE;
 
     /**
      * Semantically resolve all names in a list of statements
@@ -131,6 +140,33 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     /**
+     * Resolve a class name
+     */
+     @Override
+     public Void visitClassStmt(Stmt.Class stmt) {
+         ClassType enclosingClass = currentClass;
+         currentClass = ClassType.CLASS;
+
+         declare(stmt.name);
+         define(stmt.name);
+
+         beginScope();
+         scopes.peek().put("this", true);
+
+         for (Stmt.Function method : stmt.methods) {
+             FunctionType declaration = FunctionType.METHOD;
+             if (method.name.lexeme.equals("init")) {
+                 declaration = FunctionType.INITIALIZER;
+             }
+             resolveFunction(method, declaration);
+         }
+
+         endScope();
+         currentClass = enclosingClass;
+         return null;
+     }
+
+    /**
      * Resolve all names in an expression statement
      * @param stmt expression statement to resolve
      */
@@ -189,6 +225,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             Lox.error(stmt.keyword, "Cannot return from top-level code.");
         }
         if (stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Lox.error(stmt.keyword, "Cannot return a value from an initializer.");
+            }
             resolve(stmt.value);
         }
         return null;
@@ -270,6 +309,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     /**
+     * Resolve all names in a property get expression
+     * @param expr property get expression to resolve
+     */
+    @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.object);
+        return null;
+    }
+
+    /**
      * Resolve all names in a grouping expression
      * @param expr grouping expression to resolve
      */
@@ -295,6 +344,31 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitLogicalExpr(Expr.Logical expr) {
         resolve(expr.left);
         resolve(expr.right);
+        return null;
+    }
+
+    /**
+     * Resolve all names in a class field set expression
+     * @param field set expression to resolve
+     */
+    @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
+    }
+
+    /**
+     * Resolve the name "this"
+     */
+    @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+            return null;
+        }
+
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
