@@ -2,9 +2,15 @@ package com.jthro.lox;
 
 import java.util.List;
 
+/** 
+* Lox Stmt visitor pattern
+*/
 abstract class Stmt {
 
-  interface Visitor<R> {
+    /** 
+    * Visitor interface for Lox Stmt
+    */
+    interface Visitor<R> {
         R visitBlockStmt(Block stmt);
         R visitExpressionStmt(Expression stmt);
         R visitFunctionStmt(Function stmt);
@@ -15,6 +21,9 @@ abstract class Stmt {
         R visitWhileStmt(While stmt);
     }
 
+    /** 
+    * Visitable type lox Block
+    */
     static class Block extends Stmt {
         Block(List<Stmt> statements) {
             this.statements = statements;
@@ -28,6 +37,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox Expression
+    */
     static class Expression extends Stmt {
         Expression(Expr expression) {
             this.expression = expression;
@@ -41,6 +53,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox Function
+    */
     static class Function extends Stmt {
         Function(Token name, List<Token> params, List<Stmt> body) {
             this.name = name;
@@ -58,6 +73,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox If
+    */
     static class If extends Stmt {
         If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
             this.condition = condition;
@@ -75,6 +93,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox Print
+    */
     static class Print extends Stmt {
         Print(Expr expression) {
             this.expression = expression;
@@ -88,6 +109,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox Return
+    */
     static class Return extends Stmt {
         Return(Token keyword, Expr value) {
             this.keyword = keyword;
@@ -103,6 +127,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox Var
+    */
     static class Var extends Stmt {
         Var(Token name, Expr initializer) {
             this.name = name;
@@ -118,6 +145,9 @@ abstract class Stmt {
         }
     }
 
+    /** 
+    * Visitable type lox While
+    */
     static class While extends Stmt {
         While(Expr condition, Stmt body) {
             this.condition = condition;

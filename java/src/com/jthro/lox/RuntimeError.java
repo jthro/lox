@@ -1,5 +1,8 @@
 package com.jthro.lox;
 
+/**
+ * Lox runtime execution error class
+ */
 public class RuntimeError extends RuntimeException {
     final Token token;
 

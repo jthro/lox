@@ -5,38 +5,50 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Codegen class for the Expr and Stmt classes
+ * Builds the abstract syntax tree for the lox language from format strings
+ */
 public class GenerateAst {
+
   public static void main(String[] args) throws IOException {
     if (args.length != 1) {
       System.err.println("Usage: generate_ast <output directory>");
       System.exit(64);
     }
+
     String outputDir = args[0];
     defineAst(outputDir, "Expr", Arrays.asList(
-      "Assign   : Token name, Expr value",
-      "Binary   : Expr left, Token operator, Expr right",
-      "Call     : Expr callee, Token paren, List<Expr> arguments",
-      "Grouping : Expr expression",
-      "Literal  : Object value",
-      "Logical  : Expr left, Token operator, Expr right",
-      "Unary    : Token operator, Expr right",
-      "Variable : Token name"
-    ));
+        "Assign   : Token name, Expr value",
+        "Binary   : Expr left, Token operator, Expr right",
+        "Call     : Expr callee, Token paren, List<Expr> arguments",
+        "Grouping : Expr expression",
+        "Literal  : Object value",
+        "Logical  : Expr left, Token operator, Expr right",
+        "Unary    : Token operator, Expr right",
+        "Variable : Token name"));
 
     defineAst(outputDir, "Stmt", Arrays.asList(
-      "Block      : List<Stmt> statements",
-      "Expression : Expr expression",
-      "Function   : Token name, List<Token> params," +
-                  " List<Stmt> body",
-      "If         : Expr condition, Stmt thenBranch," +
-                  " Stmt elseBranch",
-      "Print      : Expr expression",
-      "Return     : Token keyword, Expr value",
-      "Var        : Token name, Expr initializer",
-      "While      : Expr condition, Stmt body"
-    ));
+        "Block      : List<Stmt> statements",
+        "Expression : Expr expression",
+        "Function   : Token name, List<Token> params," +
+            " List<Stmt> body",
+        "If         : Expr condition, Stmt thenBranch," +
+            " Stmt elseBranch",
+        "Print      : Expr expression",
+        "Return     : Token keyword, Expr value",
+        "Var        : Token name, Expr initializer",
+        "While      : Expr condition, Stmt body"));
   }
 
+  /**
+   * Generate source code for an abstract syntax tree superclass
+   *
+   * @param outputDir        output directory for the source file
+   * @param baseName         name of the superclass
+   * @param types            list of all types in the superclass
+   * @param classDescription javadoc description of the superclass
+   */
   private static void defineAst(
       String outputDir, String baseName, List<String> types)
       throws IOException {
@@ -47,6 +59,7 @@ public class GenerateAst {
     writer.println();
     writer.println("import java.util.List;");
     writer.println();
+    genJavadoc(writer, "Lox " + baseName + " visitor pattern", 0);
     writer.println("abstract class " + baseName + " {");
     writer.println();
 
@@ -54,7 +67,7 @@ public class GenerateAst {
 
     for (String type : types) {
       String className = type.split(":")[0].trim();
-      String fields = type.split(":")[1].trim(); 
+      String fields = type.split(":")[1].trim();
       defineType(writer, baseName, className, fields);
     }
 
@@ -65,23 +78,42 @@ public class GenerateAst {
     writer.close();
   }
 
+  /**
+   * Generate source code for a visitor interface
+   *
+   * @param writer   writer to the destination of the source code
+   * @param baseName name of the superclass this belongs to
+   * @param types    types the visitor must visit
+   */
   private static void defineVisitor(
-    PrintWriter writer, String baseName, List<String> types) {
-  writer.println("  interface Visitor<R> {");
+      PrintWriter writer, String baseName, List<String> types) {
 
-  for (String type : types) {
-    String typeName = type.split(":")[0].trim();
-    writer.println("        R visit" + typeName + baseName + "(" +
-        typeName + " " + baseName.toLowerCase() + ");");
+    genJavadoc(writer, "Visitor interface for Lox " + baseName, 1);
+    writer.println("    interface Visitor<R> {");
+
+    for (String type : types) {
+      String typeName = type.split(":")[0].trim();
+      writer.println("        R visit" + typeName + baseName + "(" +
+          typeName + " " + baseName.toLowerCase() + ");");
+    }
+
+    writer.println("    }");
+    writer.println();
   }
 
-  writer.println("    }");
-  writer.println();
-}
-
+  /**
+   * Generate source code for a type class
+   *
+   * @param writer    to the destination of the source code
+   * @param baseName  name of the superclass this belongs to
+   * @param className name of the type
+   * @param fieldList list of fields for the type class
+   */
   private static void defineType(
       PrintWriter writer, String baseName,
       String className, String fieldList) {
+
+    genJavadoc(writer, "Visitable type lox " + className, 1);
     writer.println("    static class " + className + " extends " +
         baseName + " {");
 
@@ -113,4 +145,19 @@ public class GenerateAst {
     writer.println("    }");
     writer.println();
   }
+
+  /**
+   * Helper to generate javadoc comments
+   *
+   * @param writer      writer to the destination of the source code
+   * @param doc         documentation to write
+   * @param indentLevel indentation level
+   */
+  private static void genJavadoc(PrintWriter writer, String doc, int indentLevel) {
+    String indent = " ".repeat(indentLevel * 4);
+    writer.println(indent + "/** ");
+    writer.println(indent + "* " + doc);
+    writer.println(indent + "*/");
+  }
+
 }

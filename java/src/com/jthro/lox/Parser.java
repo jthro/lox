@@ -4,17 +4,32 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Lox parser
+ */
 class Parser {
     private static class ParseError extends RuntimeException {
     };
 
     private final List<Token> tokens;
+
+    /**
+     * Current index in the list of tokens
+     */
     private int current = 0;
 
+    /**
+     * @param tokens List of tokens scanned from source code
+     */
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
 
+    /**
+     * Convert a token list into a syntax tree
+     *
+     * @return List of statements to execute sequentially
+     */
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
@@ -24,10 +39,21 @@ class Parser {
         return statements;
     }
 
+    /**
+     * Parse an expression from a token
+     *
+     * @return the expression parsed
+     */
     private Expr expression() {
         return assignment();
     }
 
+    /**
+     * Attempt to parse a declaration (function or variable) from a token
+     * Else, proceeds to parse a statement
+     *
+     * @return the statement parsed
+     */
     private Stmt declaration() {
         try {
             if (match(TokenType.FUN))
@@ -42,6 +68,12 @@ class Parser {
         }
     }
 
+    /**
+     * Attempt to parse a for, if, print, return, or while statement, or a block
+     * Otherwise, proceeds to an expression statement
+     *
+     * @return the statement parsed
+     */
     private Stmt statement() {
         if (match(TokenType.FOR))
             return forStatement();
@@ -59,6 +91,11 @@ class Parser {
         return expressionStatement();
     }
 
+    /**
+     * Parse a for loop statement
+     *
+     * @return equivalent block with the initialiser and a while loop
+     */
     private Stmt forStatement() {
         consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
 
@@ -102,6 +139,11 @@ class Parser {
         return body;
     }
 
+    /**
+     * Parse an if statement
+     *
+     * @return the if statement
+     */
     private Stmt ifStatement() {
         consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
         Expr condition = expression();
@@ -116,12 +158,22 @@ class Parser {
         return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
+    /**
+     * Parse a print statement
+     *
+     * @return the print statement
+     */
     private Stmt printStatement() {
         Expr value = expression();
         consume(TokenType.SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
     }
 
+    /**
+     * Parse a return statement
+     *
+     * @return the return statement
+     */
     private Stmt returnStatement() {
         Token keyword = previous();
         Expr value = null;
@@ -132,6 +184,12 @@ class Parser {
         return new Stmt.Return(keyword, value);
     }
 
+    /**
+     * Parse a variable declaration
+     * If it has an initialiser (expression), parse that too
+     *
+     * @return the variable declaration statement
+     */
     private Stmt varDeclaration() {
         Token name = consume(TokenType.IDENTIFIER, "Expect variable name.");
 
@@ -144,6 +202,12 @@ class Parser {
         return new Stmt.Var(name, initializer);
     }
 
+    /**
+     * Parse a while statement
+     * Consists of parsing a condition expression and a body statement
+     *
+     * @return the while statement
+     */
     private Stmt whileStatement() {
         consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
@@ -153,12 +217,23 @@ class Parser {
         return new Stmt.While(condition, body);
     }
 
+    /**
+     * Parse an expression statement
+     *
+     * @return the expression statement (AS A STATEMENT)
+     */
     private Stmt expressionStatement() {
         Expr expr = expression();
         consume(TokenType.SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
     }
 
+    /**
+     * Parse a function declaration
+     * Consists of a list of parameters (identifiers), and a block
+     *
+     * @return the function statement
+     */
     private Stmt.Function function(String kind) {
         Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
         consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
@@ -179,6 +254,12 @@ class Parser {
         return new Stmt.Function(name, parameters, body);
     }
 
+    /**
+     * Parse a block statement
+     * Consists of a list of statements
+     *
+     * @return the block statement
+     */
     private List<Stmt> block() {
         List<Stmt> statements = new ArrayList<>();
 
@@ -190,6 +271,11 @@ class Parser {
         return statements;
     }
 
+    /**
+     * Parse an assignment expression
+     * Consists of an lvalue expression and an rvalue expression
+     * Otherwise, proceeds to an or expression
+     */
     private Expr assignment() {
         Expr expr = or();
 
@@ -208,6 +294,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse an or expression
+     * Otherwise, proceed to an and expression
+     */
     private Expr or() {
         Expr expr = and();
 
@@ -220,6 +310,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse an and expression
+     * Otherwise, proceed to an equality expression
+     */
     private Expr and() {
         Expr expr = equality();
 
@@ -232,6 +326,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse an equality expression
+     * Otherwise, proceed to a comparison expression
+     */
     private Expr equality() {
         Expr expr = comparison();
 
@@ -244,6 +342,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse a numerical comparison expression (>, <, <=, >=)
+     * Otherwise, proceed to an addition/subtraction expression
+     */
     private Expr comparison() {
         Expr expr = term();
 
@@ -256,6 +358,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse a plus or minus expression
+     * Otherwise, proceed to a factor expression
+     */
     private Expr term() {
         Expr expr = factor();
 
@@ -268,6 +374,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse a factor expression
+     * Otherwise, proceed to a unary expression
+     */
     private Expr factor() {
         Expr expr = unary();
 
@@ -280,6 +390,10 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse a unary expression
+     * Otherwise, proceed to a call expression
+     */
     private Expr unary() {
         if (match(TokenType.BANG, TokenType.MINUS)) {
             Token operator = previous();
@@ -290,6 +404,10 @@ class Parser {
         return call();
     }
 
+    /**
+     * Parse a function call expression
+     * Otherwise, parse a primary expression
+     */
     private Expr call() {
         Expr expr = primary();
 
@@ -304,6 +422,9 @@ class Parser {
         return expr;
     }
 
+    /**
+     * Parse a function call expression
+     */
     private Expr finishCall(Expr callee) {
         List<Expr> arguments = new ArrayList<>();
         if (!check(TokenType.RIGHT_PAREN)) {
@@ -320,6 +441,9 @@ class Parser {
         return new Expr.Call(callee, paren, arguments);
     }
 
+    /**
+     * Parse a primary expression, i.e. a literal
+     */
     private Expr primary() {
         if (match(TokenType.FALSE))
             return new Expr.Literal(false);
@@ -345,6 +469,11 @@ class Parser {
         throw error(peek(), "Expect expression.");
     }
 
+    /**
+     * Check if the subsequent tokens match a string
+     *
+     * @param types expected subsequent tokens
+     */
     private boolean match(TokenType... types) {
         for (TokenType type : types) {
             if (check(type)) {
@@ -356,6 +485,12 @@ class Parser {
         return false;
     }
 
+    /**
+     * Ensure the subsequent token matches, and throw a compiler error if not
+     *
+     * @param type    expected subsequent token
+     * @param message error to report if the token is not found
+     */
     private Token consume(TokenType type, String message) {
         if (check(type))
             return advance();
@@ -363,35 +498,61 @@ class Parser {
         throw error(peek(), message);
     }
 
+    /**
+     * Check the subsequent token matches
+     *
+     * @param type expected subsequent token
+     */
     private boolean check(TokenType type) {
         if (isAtEnd())
             return false;
         return peek().type == type;
     }
 
+    /**
+     * Move forward one token in the token list
+     */
     private Token advance() {
         if (!isAtEnd())
             current++;
         return previous();
     }
 
+    /**
+     * Check if we have reached the end of the token list
+     */
     private boolean isAtEnd() {
         return peek().type == TokenType.EOF;
     }
 
+    /**
+     * Peek at the current token
+     */
     private Token peek() {
         return tokens.get(current);
     }
 
+    /**
+     * Peek at the previous token
+     */
     private Token previous() {
         return tokens.get(current - 1);
     }
 
+    /**
+     * Report a compiler error with associated invalid token
+     *
+     * @param token   token that caused the error
+     * @param message error message to report
+     */
     private ParseError error(Token token, String message) {
         Lox.error(token, message);
         return new ParseError();
     }
 
+    /**
+     * Re-align the parser's state with the code after it has entered an error state
+     */
     private void synchronise() {
         advance();
 

@@ -1,0 +1,6 @@
+var a = "hello";
+{
+  var b = "world";
+  var c = "sussy";
+  print(a + " " + b);
+}

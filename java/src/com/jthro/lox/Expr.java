@@ -2,9 +2,15 @@ package com.jthro.lox;
 
 import java.util.List;
 
+/** 
+* Lox Expr visitor pattern
+*/
 abstract class Expr {
 
-  interface Visitor<R> {
+    /** 
+    * Visitor interface for Lox Expr
+    */
+    interface Visitor<R> {
         R visitAssignExpr(Assign expr);
         R visitBinaryExpr(Binary expr);
         R visitCallExpr(Call expr);
@@ -15,6 +21,9 @@ abstract class Expr {
         R visitVariableExpr(Variable expr);
     }
 
+    /** 
+    * Visitable type lox Assign
+    */
     static class Assign extends Expr {
         Assign(Token name, Expr value) {
             this.name = name;
@@ -30,6 +39,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Binary
+    */
     static class Binary extends Expr {
         Binary(Expr left, Token operator, Expr right) {
             this.left = left;
@@ -47,6 +59,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Call
+    */
     static class Call extends Expr {
         Call(Expr callee, Token paren, List<Expr> arguments) {
             this.callee = callee;
@@ -64,6 +79,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Grouping
+    */
     static class Grouping extends Expr {
         Grouping(Expr expression) {
             this.expression = expression;
@@ -77,6 +95,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Literal
+    */
     static class Literal extends Expr {
         Literal(Object value) {
             this.value = value;
@@ -90,6 +111,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Logical
+    */
     static class Logical extends Expr {
         Logical(Expr left, Token operator, Expr right) {
             this.left = left;
@@ -107,6 +131,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Unary
+    */
     static class Unary extends Expr {
         Unary(Token operator, Expr right) {
             this.operator = operator;
@@ -122,6 +149,9 @@ abstract class Expr {
         }
     }
 
+    /** 
+    * Visitable type lox Variable
+    */
     static class Variable extends Expr {
         Variable(Token name) {
             this.name = name;

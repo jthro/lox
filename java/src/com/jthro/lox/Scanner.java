@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Converts a text stream into a list of {@link Token}s
+ */
 class Scanner {
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
@@ -12,10 +15,16 @@ class Scanner {
     private int current = 0;
     private int line = 1;
 
+    /**
+     * @param source String of Lox source code
+     */
     Scanner(String source) {
         this.source = source;
     }
 
+    /**
+     * Scan source code into a list of tokens
+     */
     List<Token> scanTokens() {
         while (!isAtEnd()) {
             start = current;
@@ -26,6 +35,9 @@ class Scanner {
         return tokens;
     }
 
+    /**
+     * Scan the next token in the source code
+     */
     private void scanToken() {
         char c = advance();
         switch (c) {
@@ -105,6 +117,9 @@ class Scanner {
         }
     }
 
+    /**
+     * Append identifier token to token list
+     */
     private void identifier() {
         while (isAlphaNumeric(peek()))
             advance();
@@ -117,6 +132,9 @@ class Scanner {
         addToken(type);
     }
 
+    /**
+     * Append number token to token list
+     */
     private void number() {
         while (isDigit(peek()))
             advance();
@@ -131,6 +149,9 @@ class Scanner {
         addToken(TokenType.NUMBER, Double.parseDouble(source.substring(start, current)));
     }
 
+    /**
+     * Append string token to token list
+     */
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n')
@@ -149,6 +170,11 @@ class Scanner {
         addToken(TokenType.STRING, value);
     }
 
+    /**
+     * Check if current char matches the expected char
+     *
+     * @param expected expected char
+     */
     private boolean match(char expected) {
         if (isAtEnd())
             return false;
@@ -159,49 +185,81 @@ class Scanner {
         return true;
     }
 
+    /**
+     * @return the current char in the stream
+     */
     private char peek() {
         if (isAtEnd())
             return '\0';
         return source.charAt(current);
     }
 
+    /**
+     * @return the next char in the stream
+     */
     private char peekNext() {
         if (current + 1 >= source.length())
             return '\0';
         return source.charAt(current + 1);
     }
 
+    /**
+     * @return true if the char is alphabetical
+     */
     private boolean isAlpha(char c) {
         return (c >= 'a' && c <= 'z') ||
                 (c >= 'A' && c <= 'Z') ||
                 c == '_';
     }
 
+    /**
+     * @return true if the char is alphabetical or numeric
+     */
     private boolean isAlphaNumeric(char c) {
         return isAlpha(c) || isDigit(c);
     }
 
+    /**
+     * @return true if the char is a digit
+     */
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
     }
 
+    /**
+     * @return true if the end of the stream has been reached
+     */
     private boolean isAtEnd() {
         return current >= source.length();
     }
 
+    /**
+     * Go to the next character in the stream
+     *
+     * @return the next character in the stream
+     */
     private char advance() {
         return source.charAt(current++);
     }
 
+    /**
+     * Add a token to the token list
+     */
     private void addToken(TokenType type) {
         addToken(type, null);
     }
 
+    /**
+     * Add a token and its literal value to the token list
+     */
     private void addToken(TokenType type, Object literal) {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }
 
+    /**
+     * List of all valid Lox keywords and their corresponding {@link TokenType}s
+     */
     private static final Map<String, TokenType> keywords;
 
     static {
