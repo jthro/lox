@@ -1,7 +1,21 @@
-class Impostor {
-      accuse() {
-          return "sussy";
-      }
+class A {
+  method() {
+    print "A";
+  }
 }
 
-print Impostor;
+class B < A {
+  method() {
+    print "B";
+  }
+
+  test() {
+    super.method();
+  }
+}
+
+class C < B {}
+
+var c = C();
+
+c.test();
