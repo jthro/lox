@@ -7,6 +7,7 @@
 
 typedef enum {
     OP_CONSTANT,
+    OP_CONSTANT_LONG,
     OP_RETURN,
 } OpCode;
 
@@ -47,5 +48,11 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line);
  * @return the index of the constant in the pool
  */
 int addConstant(Chunk* chunk, Value value);
+
+/**
+ * Append an OP_CONSTANT_LONG instruction to a chunk as well as
+ * adding the constant to the constant pool
+ */
+void writeConstant(Chunk* chunk, Value value, int line);
 
 #endif // chunk_h
